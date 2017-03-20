@@ -213,7 +213,7 @@ void cleanup_module(void)
 	
 	}
 
-	// this thread continiously lets producer processes out of the semaphore
+	// this thread continiously lets producer processes out of the semaphore lock.
 	awakenerp = kthread_run(&awaken_producer_fn, NULL, "awakener_fn");
 
 	for (i = 0; i < np; i++) {
@@ -233,6 +233,16 @@ void cleanup_module(void)
 		printk(KERN_INFO "awakenerp thread: Stopped.");
 	
 	}
+
+	/* The buffer should be full at this time need to free all the elements within the buffer first. 
+	   Buffer is rounded up to the nearest power of two but should should only be only have bs elements
+	   in it either how. TODO: test.*/
+	for(i = 0; i < bs; i++){
+		kfifo_get(&buffer, &foo);
+		//printk(KERN_INFO "Consumed %d\n", foo->num); // commented out but will use for testing.
+		kfree(foo);	
+	}
+
 	printk(KERN_INFO "ALL THREADS STOPPED.");
 
 	kfifo_free(&buffer);
